@@ -3,7 +3,7 @@
 
 namespace App\Services\Marketplace;
 
-use App\Services\Marketplace\Exceptions\ResponseParsingException;
+use App\Services\Marketplace\Exceptions\InvalidConfigException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -30,7 +30,7 @@ class MarketplaceClient
      * MarketplaceClient constructor.
      *
      * @param array $config
-     * @throws ResponseParsingException
+     * @throws InvalidConfigException
      */
     public function __construct(array $config)
     {
@@ -40,12 +40,12 @@ class MarketplaceClient
 
     /**
      * @param array $config
-     * @throws ResponseParsingException
+     * @throws InvalidConfigException
      */
     private function setConfig(array $config): void
     {
         if (empty($config['client_id']) || empty($config['client_secret'])) {
-            throw new ResponseParsingException();
+            throw new InvalidConfigException();
         }
 
         $this->config = $config;
@@ -120,7 +120,7 @@ class MarketplaceClient
         try {
             return $this->client->request($method, $uri, $payload);
         } catch (BadResponseException $exception) {
-            // Token is expired for some reason
+            // Token is invalid for some reason
             if ($exception->getCode() == Response::HTTP_UNAUTHORIZED) {
                 // Get new access token, update the authorization header and try again
                 $this->getNewAccessToken();
@@ -133,6 +133,10 @@ class MarketplaceClient
         }
     }
 
+    /**
+     * @param array $payload
+     * @return array
+     */
     private function addAuthorizationHeaderToRequestPayload(array $payload): array
     {
         return array_merge($payload, [
