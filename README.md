@@ -10,7 +10,7 @@
 - [docker-compose](http://docs.docker.com/compose)
 
 
-##### 1. Clone project:
+##### 1. Clone a project:
 ```bash
 git clone https://github.com/valeriitkachenko/wap-dev-assessment.git
 cd wap-dev-assessment/docker
@@ -21,27 +21,26 @@ cd wap-dev-assessment/docker
 ##### 2.1. Create environment files & up containers:
 ```bash
 cp .env.example .env
-
 docker-compose up -d workspace php-fpm nginx postgres
 ```
 
-##### 2.2. Init application
+##### 2.2. Init an application
 ```bash
 docker-compose exec -u laradock workspace bash
 
 composer install
 php artisan key:generate
 ```
-Once done, provide your WAP_CLIENT_* credentials and DB_PASSWORD to Laravel's .env file
+Once done, provide your WAP_CLIENT_* credentials to Laravel's .env file
 
-##### 2.3. Add host (optional):
+##### 2.3. Add a host (optional):
 
 For Linux / MacOS:
 ```
 sudo bash -c "echo 127.0.0.1 wap-assessment.local >> /etc/hosts"
 ```
 
-For Windows: edit file `%systemroot%\system32\drivers\etc\hosts` and add line
+For Windows: edit a file `%systemroot%\system32\drivers\etc\hosts` and add a line
 ```
 127.0.0.1 wap-assessment.local
 ```

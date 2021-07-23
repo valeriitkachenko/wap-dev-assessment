@@ -115,7 +115,8 @@ class MarketplaceClient
             return $this->client->request($method, $uri, $payload);
         }
 
-        $payload = $this->addAuthorizationHeaderToRequestPayload($payload);
+        $accessToken = $this->getAccessTokenFromCacheOrGenerateNew();
+        $payload = $this->addAuthorizationHeaderToRequestPayload($payload, $accessToken);
 
         try {
             return $this->client->request($method, $uri, $payload);
@@ -123,8 +124,8 @@ class MarketplaceClient
             // Token is invalid for some reason
             if ($exception->getCode() == Response::HTTP_UNAUTHORIZED) {
                 // Get new access token, update the authorization header and try again
-                $this->getNewAccessToken();
-                $payload = $this->addAuthorizationHeaderToRequestPayload($payload);
+                $freshAccessToken = $this->generateNewAccessToken();
+                $payload = $this->addAuthorizationHeaderToRequestPayload($payload, $freshAccessToken);
 
                 return $this->client->request($method, $uri, $payload);
             }
@@ -135,27 +136,31 @@ class MarketplaceClient
 
     /**
      * @param array $payload
+     * @param string $token
      * @return array
      */
-    private function addAuthorizationHeaderToRequestPayload(array $payload): array
+    private function addAuthorizationHeaderToRequestPayload(array $payload, string $token): array
     {
         return array_merge($payload, [
             'headers' => [
-                'Authorization' => 'Bearer ' . $this->getAccessTokenFromCache(),
+                'Authorization' => 'Bearer ' . $token,
             ]
         ]);
     }
 
     /**
+     * Tries to get token from the cache first
+     * and recreates it if token expired
+     *
      * @return string
      * @throws GuzzleException
      */
-    private function getAccessTokenFromCacheOrCreateNew(): string
+    private function getAccessTokenFromCacheOrGenerateNew(): string
     {
         $accessToken = $this->getAccessTokenFromCache();
 
         if (empty($accessToken)) {
-            $accessToken = $this->getNewAccessToken();
+            $accessToken = $this->generateNewAccessToken();
         }
 
         return $accessToken;
@@ -173,7 +178,7 @@ class MarketplaceClient
      * @return string
      * @throws GuzzleException
      */
-    private function getNewAccessToken(): string
+    private function generateNewAccessToken(): string
     {
         $tokenResponse = $this->getAccessToken();
 

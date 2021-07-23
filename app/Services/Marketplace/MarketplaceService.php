@@ -8,6 +8,8 @@ use App\Models\Product;
 use App\Services\Marketplace\Exceptions\InvalidConfigException;
 use App\Services\Marketplace\Exceptions\ResponseParsingException;
 use App\Services\Marketplace\Helpers\DataParser;
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\Eloquent\Model;
 
 class MarketplaceService
@@ -36,14 +38,19 @@ class MarketplaceService
         $this->client = new MarketplaceClient($config);
     }
 
-    public function getProductOrOrderInstance(): Model
+    /**
+     * @return Model
+     * @throws ResponseParsingException
+     * @throws GuzzleException
+     */
+    public function getProductOrOrderEntity(): Model
     {
         $productOrOrder = self::getProductOrOrder();
         $type = $productOrOrder['type'];
         $properties = $productOrOrder['properties'];
 
         if (!in_array($type, self::AVAILABLE_TYPES)) {
-            throw new \Exception('Couldn\'t create an entity');
+            throw new Exception('Couldn\'t create an entity');
         }
 
         if ($type == self::TYPE_ORDER) {
@@ -64,7 +71,7 @@ class MarketplaceService
     /**
      * @return array
      * @throws ResponseParsingException
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function getProductOrOrder(): array
     {
