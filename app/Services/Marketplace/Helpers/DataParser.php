@@ -48,13 +48,14 @@ class DataParser
      */
     private static function getEntityTypeAndEncodedProperties(string $value): array
     {
-        preg_match('/(order|product):([^"]+)/', $value, $matches);
+        $pattern = '/(?P<type>order|product):(?P<encodedProperties>[^"]+)/';
+        preg_match($pattern, $value, $matches);
 
-        if (empty($matches[1]) || empty($matches[2])) {
+        if (empty($matches['type']) || empty($matches['encodedProperties'])) {
             throw new ResponseParsingException();
         }
 
-        return ['type' => $matches[1], 'encodedProperties' => $matches[2]];
+        return ['type' => $matches['type'], 'encodedProperties' => $matches['encodedProperties']];
     }
 
     /**
@@ -64,16 +65,16 @@ class DataParser
      */
     private static function decodeEntityProperties(string $encodedProperties): array
     {
-        preg_match_all('/([a-zA-Z_]+)([\\\\]{2}([a-zA-Z0-9;]+))?{([^|}]+)}/', $encodedProperties, $matches);
+        $pattern = '/(?P<keys>[a-zA-Z_]+)([\\\\]{2}(?P<types>[a-zA-Z0-9;]+))?{(?P<values>[^|}]+)}/';
+        preg_match_all($pattern, $encodedProperties, $matches);
 
-        if (empty($matches[1]) || empty($matches[4])) {
+        if (empty($matches['keys']) || empty($matches['values'])) {
             throw new ResponseParsingException();
         }
 
-        $keys = $matches[1];
-        $values = self::processDecodedValues($matches[4], $matches[3]);
+        $values = self::processDecodedValues($matches['values'], $matches['types']);
 
-        return array_combine($keys, $values);
+        return array_combine($matches['keys'], $values);
     }
 
     /**
